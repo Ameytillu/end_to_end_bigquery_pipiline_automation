@@ -117,17 +117,17 @@ if run_query or (
 				("Delivered", df_clean["delivered_at"].notnull().sum() if "delivered_at" in df_clean.columns else 0),
 				("Returned", df_clean["returned_at"].notnull().sum() if "returned_at" in df_clean.columns else 0)
 			]
-				funnel_labels, funnel_values = zip(*funnel_stages)
-				fig3, ax3 = plt.subplots()
-				ax3.barh(funnel_labels, funnel_values, color="lightgreen")
-				ax3.set_xlabel("Count")
-				ax3.set_title("Order Funnel")
-				st.pyplot(fig3)
+			funnel_labels, funnel_values = zip(*funnel_stages)
+			fig3, ax3 = plt.subplots()
+			ax3.barh(funnel_labels, funnel_values, color="lightgreen")
+			ax3.set_xlabel("Count")
+			ax3.set_title("Order Funnel")
+			st.pyplot(fig3)
 
-				# 3. Cancelled Orders Count (Bar)
-				st.subheader("Cancelled Orders Count")
-				if "status" in df_clean.columns:
-					cancelled_count = (df_clean["status"] == "Cancelled").sum()
+			# 3. Cancelled Orders Count (Bar)
+			st.subheader("Cancelled Orders Count")
+			if "status" in df_clean.columns:
+				cancelled_count = (df_clean["status"] == "Cancelled").sum()
 					fig4, ax4 = plt.subplots()
 					ax4.bar(["Cancelled"], [cancelled_count], color="red")
 					ax4.set_ylabel("Count")
