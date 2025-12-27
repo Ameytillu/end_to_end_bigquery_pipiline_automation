@@ -87,31 +87,78 @@ if st.sidebar.button("Run Query"):
 		st.subheader("Raw Data Preview")
 		st.dataframe(df_clean.head(50))
 
-		# Visualizations for each table
-		if selected_table == "products":
-			st.subheader("Product Category Distribution")
-			if "category" in df_clean.columns:
-				cat_counts = df_clean["category"].value_counts()
-				st.bar_chart(cat_counts)
-		elif selected_table == "distribution_centers":
-			st.subheader("Distribution Centers Locations")
-			if "latitude" in df_clean.columns and "longitude" in df_clean.columns:
-				st.map(df_clean[["latitude", "longitude"]].rename(columns={"latitude": "lat", "longitude": "lon"}))
-		elif selected_table == "events":
-			st.subheader("Event Type Counts")
-			if "event_type" in df_clean.columns:
-				event_counts = df_clean["event_type"].value_counts()
-				st.bar_chart(event_counts)
-		elif selected_table == "inventory_items":
-			st.subheader("Product Category in Inventory Items")
-			if "product_category" in df_clean.columns:
-				inv_cat_counts = df_clean["product_category"].value_counts()
-				st.bar_chart(inv_cat_counts)
-		elif selected_table == "order_items":
-			st.subheader("Order Status Distribution")
-			if "status" in df_clean.columns:
-				status_counts = df_clean["status"].value_counts()
-				st.bar_chart(status_counts)
+		# --- Interactive Charting Section ---
+		st.subheader("Explore Data Visually")
+		chart_types = ["Bar", "Line", "Scatter", "Histogram", "Box"]
+		chart_type = st.selectbox("Chart type", chart_types, index=0)
+
+		# Identify column types
+		numeric_cols = df_clean.select_dtypes(include=['number']).columns.tolist()
+		categorical_cols = df_clean.select_dtypes(include=['object', 'category']).columns.tolist()
+		all_cols = df_clean.columns.tolist()
+
+		# Sensible defaults
+		default_x = numeric_cols[0] if numeric_cols else (categorical_cols[0] if categorical_cols else all_cols[0])
+		default_y = numeric_cols[1] if len(numeric_cols) > 1 else (numeric_cols[0] if numeric_cols else None)
+
+		# Guardrails and selectors
+		if chart_type in ["Bar", "Line", "Scatter"]:
+			x_axis = st.selectbox("X axis", all_cols, index=all_cols.index(default_x) if default_x in all_cols else 0)
+			y_axis = st.selectbox("Y axis", numeric_cols, index=numeric_cols.index(default_y) if default_y in numeric_cols else 0) if numeric_cols else None
+		elif chart_type == "Histogram":
+			x_axis = st.selectbox("Column", numeric_cols, index=0) if numeric_cols else None
+			y_axis = None
+		elif chart_type == "Box":
+			x_axis = st.selectbox("X (category)", categorical_cols, index=0) if categorical_cols else None
+			y_axis = st.selectbox("Y (numeric)", numeric_cols, index=0) if numeric_cols else None
+		else:
+			x_axis, y_axis = None, None
+
+		# Only show chart if valid columns are selected
+		if (
+			(chart_type in ["Bar", "Line", "Scatter"] and x_axis and y_axis) or
+			(chart_type == "Histogram" and x_axis) or
+			(chart_type == "Box" and x_axis and y_axis)
+		):
+			fig, ax = plt.subplots()
+			if chart_type == "Bar":
+				# Bar: group by x, aggregate y (mean/count)
+				if pd.api.types.is_numeric_dtype(df_clean[x_axis]):
+					df_plot = df_clean[x_axis].value_counts().sort_index()
+					df_plot.plot(kind="bar", ax=ax)
+					ax.set_ylabel("Count")
+				else:
+					df_plot = df_clean.groupby(x_axis)[y_axis].mean().sort_values()
+					df_plot.plot(kind="bar", ax=ax)
+					ax.set_ylabel(f"Mean {y_axis}")
+				ax.set_xlabel(x_axis)
+				ax.set_title(f"Bar Chart: {x_axis} vs {y_axis if y_axis else 'Count'}")
+			elif chart_type == "Line":
+				ax.plot(df_clean[x_axis], df_clean[y_axis], marker='o')
+				ax.set_xlabel(x_axis)
+				ax.set_ylabel(y_axis)
+				ax.set_title(f"Line Chart: {x_axis} vs {y_axis}")
+			elif chart_type == "Scatter":
+				ax.scatter(df_clean[x_axis], df_clean[y_axis], alpha=0.7)
+				ax.set_xlabel(x_axis)
+				ax.set_ylabel(y_axis)
+				ax.set_title(f"Scatter Plot: {x_axis} vs {y_axis}")
+			elif chart_type == "Histogram":
+				ax.hist(df_clean[x_axis], bins=30, color='skyblue', edgecolor='black')
+				ax.set_xlabel(x_axis)
+				ax.set_ylabel("Frequency")
+				ax.set_title(f"Histogram: {x_axis}")
+			elif chart_type == "Box":
+				df_clean.boxplot(column=y_axis, by=x_axis, ax=ax)
+				ax.set_title(f"Box Plot: {y_axis} by {x_axis}")
+				ax.set_xlabel(x_axis)
+				ax.set_ylabel(y_axis)
+				plt.suptitle("")
+			st.pyplot(fig)
+		else:
+			st.info("Select valid columns for the chosen chart type.")
+
+		# --- End Interactive Charting Section ---
 
 		# Optionally show KPIs/charts only for orders
 		if selected_table == "orders" and not kpis.empty:
