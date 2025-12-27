@@ -17,7 +17,27 @@ if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
 	with open(key_path, "w") as f:
 		f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
 	os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+# Set Streamlit page config and show dataset info
 st.set_page_config(page_title="E2E BigQuery Analytics", layout="wide")
+
+st.title("End-to-End BigQuery Analytics Dashboard")
+
+# --- Dataset Info and Metadata ---
+st.markdown("""
+**Data Source:** [Google BigQuery Public Dataset: thelook_ecommerce](https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=thelook_ecommerce&page=dataset)
+
+**Dataset:** `bigquery-public-data.thelook_ecommerce`
+
+**Tables Available:**
+- `products`: Product catalog with details like id, name, brand, category, price, etc.
+- `distribution_centers`: Distribution center locations with latitude/longitude.
+- `events`: User events (web/app) with event_type, session, city, etc.
+- `inventory_items`: Inventory records with product, cost, category, etc.
+- `order_items`: Order line items with status, price, shipment, etc.
+
+**Note:**
+This dashboard lets you explore and visualize data from the above tables. All data is simulated and for analytics demo purposes only.
+""")
 # Table selector and row limit
 table_options = [
 	"products",
