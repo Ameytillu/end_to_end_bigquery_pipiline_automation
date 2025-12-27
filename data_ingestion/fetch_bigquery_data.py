@@ -38,8 +38,7 @@ def fetch_orders(start_date, end_date, limit):
     client = get_bigquery_client()
     query = f"""
         SELECT *
-        FROM `bigquery-public-data.thelook_ecommerce.orders`
-        WHERE DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'
+        FROM `bigquery-public-data.thelook_ecommerce.products`
         LIMIT {limit}
     """
     print(f"DEBUG: BigQuery query: {query}")
