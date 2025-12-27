@@ -1,3 +1,13 @@
+def fetch_data_from_bigquery():
+    # ...existing code...
+    client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+    query = "SELECT * FROM your_dataset.your_table"  # Update with your actual query
+    print(f"DEBUG: Running BigQuery query: {query}")
+    df = client.query(query).to_dataframe()
+    print(f"DEBUG: Number of records fetched: {len(df)}")
+    print(f"DEBUG: DataFrame columns: {df.columns.tolist()}")
+    print(f"DEBUG: First 5 rows:\n{df.head()}")
+    return df
 
 
 import logging
