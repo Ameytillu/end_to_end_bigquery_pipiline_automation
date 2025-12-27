@@ -34,11 +34,12 @@ def get_bigquery_client():
     client = bigquery.Client(credentials=credentials, project=project_id)
     return client
 
-def fetch_orders(start_date, end_date, limit):
+
+def fetch_orders(table_name, limit):
     client = get_bigquery_client()
     query = f"""
         SELECT *
-        FROM `bigquery-public-data.thelook_ecommerce.products`
+        FROM `bigquery-public-data.thelook_ecommerce.{table_name}`
         LIMIT {limit}
     """
     print(f"DEBUG: BigQuery query: {query}")

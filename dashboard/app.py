@@ -57,67 +57,77 @@ with st.spinner("Checking available data range in BigQuery..."):
 
 st.sidebar.header("Query Parameters")
 
-today = date.today()
-default_start = today - timedelta(days=30)
-start_date = st.sidebar.date_input("Start date", default_start)
-end_date = st.sidebar.date_input("End date", today)
+st.write(f"DEBUG: start_date={start_date}, end_date={end_date}, limit={limit}")
+
+# Table selector and row limit
+table_options = [
+	"products",
+	"distribution_centers",
+	"events",
+	"inventory_items",
+	"order_items"
+]
+selected_table = st.sidebar.selectbox("Select table", table_options)
 limit = st.sidebar.number_input("Row limit", min_value=100, max_value=100000, value=1000, step=100)
 
-st.write(f"DEBUG: start_date={start_date}, end_date={end_date}, limit={limit}")
+st.write(f"DEBUG: selected_table={selected_table}, limit={limit}")
 
 if st.sidebar.button("Run Query"):
 	with st.spinner("Fetching data from BigQuery..."):
-		# Convert dates to string format YYYY-MM-DD for query
-		start_date_str = start_date.strftime("%Y-%m-%d") if hasattr(start_date, 'strftime') else str(start_date)
-		end_date_str = end_date.strftime("%Y-%m-%d") if hasattr(end_date, 'strftime') else str(end_date)
-		st.write(f"DEBUG: Querying with start_date={start_date_str}, end_date={end_date_str}, limit={limit}")
-		df = fetch_orders(start_date=start_date_str, end_date=end_date_str, limit=limit)
-		df_clean = clean_orders(df)
-		kpis = calculate_daily_kpis(df_clean)
+		st.write(f"DEBUG: Querying table={selected_table} with limit={limit}")
+		df = fetch_orders(table_name=selected_table, limit=limit)
+		# Optionally, apply cleaning/analytics only for orders/products
+		if selected_table == "orders":
+			df_clean = clean_orders(df)
+			kpis = calculate_daily_kpis(df_clean)
+		else:
+			df_clean = df
+			kpis = pd.DataFrame()  # No KPIs for non-orders
 
-	if not kpis.empty:
-		st.subheader("Key Performance Indicators (KPIs)")
-		kpi1, kpi2, kpi3 = st.columns(3)
-		total_revenue = kpis['revenue'].sum()
-		total_orders = kpis['orders'].sum()
-		avg_order_value = kpis['avg_order_value'].mean()
-		kpi1.metric("Total Revenue", f"${total_revenue:,.2f}")
-		kpi2.metric("Total Orders", f"{total_orders}")
-		kpi3.metric("Avg Order Value", f"${avg_order_value:,.2f}")
-
-		st.subheader("Revenue Trend")
-		fig1 = plt.figure()
-		plt.plot(kpis['order_date'], kpis['revenue'], label='Revenue')
-		plt.xlabel('Date')
-		plt.ylabel('Revenue')
-		plt.title('Daily Revenue')
-		plt.xticks(rotation=45)
-		plt.tight_layout()
-		st.pyplot(fig1)
-
-		st.subheader("Orders Trend")
-		fig2 = plt.figure()
-		plt.plot(kpis['order_date'], kpis['orders'], label='Orders', color='orange')
-		plt.xlabel('Date')
-		plt.ylabel('Orders')
-		plt.title('Daily Orders')
-		plt.xticks(rotation=45)
-		plt.tight_layout()
-		st.pyplot(fig2)
-
-		st.subheader("Average Order Value Trend")
-		fig3 = plt.figure()
-		plt.plot(kpis['order_date'], kpis['avg_order_value'], label='Avg Order Value', color='green')
-		plt.xlabel('Date')
-		plt.ylabel('Avg Order Value')
-		plt.title('Average Order Value by Day')
-		plt.xticks(rotation=45)
-		plt.tight_layout()
-		st.pyplot(fig3)
-
+	if not df_clean.empty:
 		st.subheader("Raw Data Preview")
 		st.dataframe(df_clean.head(50))
+		# Optionally show KPIs/charts only for orders
+		if selected_table == "orders" and not kpis.empty:
+			st.subheader("Key Performance Indicators (KPIs)")
+			kpi1, kpi2, kpi3 = st.columns(3)
+			total_revenue = kpis['revenue'].sum()
+			total_orders = kpis['orders'].sum()
+			avg_order_value = kpis['avg_order_value'].mean()
+			kpi1.metric("Total Revenue", f"${total_revenue:,.2f}")
+			kpi2.metric("Total Orders", f"{total_orders}")
+			kpi3.metric("Avg Order Value", f"${avg_order_value:,.2f}")
+
+			st.subheader("Revenue Trend")
+			fig1 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['revenue'], label='Revenue')
+			plt.xlabel('Date')
+			plt.ylabel('Revenue')
+			plt.title('Daily Revenue')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig1)
+
+			st.subheader("Orders Trend")
+			fig2 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['orders'], label='Orders', color='orange')
+			plt.xlabel('Date')
+			plt.ylabel('Orders')
+			plt.title('Daily Orders')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig2)
+
+			st.subheader("Average Order Value Trend")
+			fig3 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['avg_order_value'], label='Avg Order Value', color='green')
+			plt.xlabel('Date')
+			plt.ylabel('Avg Order Value')
+			plt.title('Average Order Value by Day')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig3)
 	else:
 		st.warning("No data found for the selected parameters.")
 else:
-	st.info("Select parameters and click 'Run Query' to view analytics.")
+	st.info("Select table and row limit, then click 'Run Query' to view data.")
