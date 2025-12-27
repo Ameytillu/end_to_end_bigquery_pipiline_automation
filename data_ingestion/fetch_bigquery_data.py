@@ -17,7 +17,17 @@ def load_config(config_path="config/config.yaml"):
         logging.error(f"Failed to load config: {e}")
         raise
 
-def fetch_orders(limit=100000, config_path="config/config.yaml"):
+def fetch_orders(start_date=None, end_date=None, limit=100000, config_path="config/config.yaml"):
+    """
+    Fetch orders from BigQuery with optional date filtering and row limit.
+    Args:
+        start_date (str): 'YYYY-MM-DD' or None
+        end_date (str): 'YYYY-MM-DD' or None
+        limit (int): max rows to fetch
+        config_path (str): path to config file
+    Returns:
+        pd.DataFrame
+    """
     config = load_config(config_path)
     dataset = config.get('project', {}).get('dataset', 'thelook_ecommerce')
     project_id = config.get('project', {}).get('gcp_project', 'bigquery-public-data')
@@ -28,6 +38,13 @@ def fetch_orders(limit=100000, config_path="config/config.yaml"):
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
 
     client = bigquery.Client()
+    where_clauses = []
+    if start_date:
+        where_clauses.append(f"o.created_at >= '{start_date}'")
+    if end_date:
+        where_clauses.append(f"o.created_at <= '{end_date}'")
+    where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
     query = f"""
     SELECT
         o.order_id,
@@ -43,6 +60,7 @@ def fetch_orders(limit=100000, config_path="config/config.yaml"):
     FROM `{project_id}.{dataset}.orders` o
     LEFT JOIN `{project_id}.{dataset}.order_items` oi
         ON o.order_id = oi.order_id
+    {where_sql}
     GROUP BY o.order_id, o.user_id, o.status, o.gender, o.created_at, o.returned_at, o.shipped_at, o.delivered_at, o.num_of_item
     ORDER BY o.created_at DESC
     LIMIT {limit}
