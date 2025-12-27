@@ -18,7 +18,7 @@ if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
 import streamlit as st
 import pandas as pd
 from datetime import date, timedelta
-from data_ingestion.fetch_bigquery_data import fetch_orders
+from data_ingestion.fetch_bigquery_data import fetch_orders, get_bigquery_client
 from transformations.clean_transform import clean_orders
 from analytics.kpi_calculations import calculate_daily_kpis
 from visualization.generate_charts import plot_revenue, plot_orders, plot_avg_order_value
@@ -39,7 +39,22 @@ This dashboard uses the [BigQuery public dataset: thelook_ecommerce.orders](http
 **Source:** [Google Cloud Public Datasets](https://cloud.google.com/bigquery/public-data)
 """)
 
-# Sidebar controls
+
+# Diagnostic: Show min/max created_at date in the dataset
+with st.spinner("Checking available data range in BigQuery..."):
+	client = get_bigquery_client()
+	diag_query = """
+		SELECT MIN(created_at) as min_date, MAX(created_at) as max_date
+		FROM `bigquery-public-data.thelook_ecommerce.orders`
+	"""
+	diag_result = client.query(diag_query).to_dataframe()
+	min_date = diag_result['min_date'][0].date() if not diag_result.empty else None
+	max_date = diag_result['max_date'][0].date() if not diag_result.empty else None
+	if min_date and max_date:
+		st.info(f"Available data range: **{min_date}** to **{max_date}**")
+	else:
+		st.warning("Could not determine available data range.")
+
 st.sidebar.header("Query Parameters")
 today = date.today()
 default_start = today - timedelta(days=30)
