@@ -115,6 +115,7 @@ if run_query or (
 			(chart_type == "Box" and x_axis and y_axis)
 		):
 			fig, ax = plt.subplots()
+			max_xticks = 20
 			if chart_type == "Bar":
 				if pd.api.types.is_numeric_dtype(df_clean[x_axis]):
 					df_plot = df_clean[x_axis].value_counts().sort_index()
@@ -122,15 +123,23 @@ if run_query or (
 					ax.set_ylabel("Count")
 				else:
 					df_plot = df_clean.groupby(x_axis)[y_axis].mean().sort_values()
+					if len(df_plot) > max_xticks:
+						st.warning(f"Too many unique values in '{x_axis}' to display clearly. Showing top {max_xticks}.")
+						df_plot = df_plot.head(max_xticks)
 					df_plot.plot(kind="bar", ax=ax)
 					ax.set_ylabel(f"Mean {y_axis}")
 				ax.set_xlabel(x_axis)
 				ax.set_title(f"Bar Chart: {x_axis} vs {y_axis if y_axis else 'Count'}")
+				plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 			elif chart_type == "Line":
 				ax.plot(df_clean[x_axis], df_clean[y_axis], marker='o')
 				ax.set_xlabel(x_axis)
 				ax.set_ylabel(y_axis)
 				ax.set_title(f"Line Chart: {x_axis} vs {y_axis}")
+				if len(df_clean[x_axis].unique()) > max_xticks:
+					ax.set_xticks([])
+				else:
+					plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 			elif chart_type == "Scatter":
 				ax.scatter(df_clean[x_axis], df_clean[y_axis], alpha=0.7)
 				ax.set_xlabel(x_axis)
@@ -147,6 +156,7 @@ if run_query or (
 				ax.set_xlabel(x_axis)
 				ax.set_ylabel(y_axis)
 				plt.suptitle("")
+				plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 			st.pyplot(fig)
 		else:
 			st.info("Select valid columns for the chosen chart type.")
