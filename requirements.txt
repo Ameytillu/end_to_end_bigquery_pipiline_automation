@@ -1,0 +1,7 @@
+pandas
+google-cloud-bigquery
+sqlalchemy
+psycopg2-binary
+prefect
+matplotlib
+streamlit

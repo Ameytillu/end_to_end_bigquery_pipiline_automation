@@ -1,0 +1,6 @@
+project:
+  name: end_to_end_bigquery_pipeline
+  dataset: thelook_ecommerce
+  table: orders
+  gcp_project: bigquery-public-data
+  gcp_credentials: ""  # Path to your GCP credentials JSON file (if needed)
