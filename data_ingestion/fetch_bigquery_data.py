@@ -1,7 +1,7 @@
 def fetch_data_from_bigquery():
     # ...existing code...
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-    query = "SELECT * FROM your_dataset.your_table"  # Update with your actual query
+    query = "SELECT * FROM `bigquery-public-data.thelook_ecommerce.orders` LIMIT 1000"  # Public BigQuery table
     print(f"DEBUG: Running BigQuery query: {query}")
     df = client.query(query).to_dataframe()
     print(f"DEBUG: Number of records fetched: {len(df)}")
