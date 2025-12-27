@@ -440,24 +440,25 @@ if run_query or (
 
 		# ...existing code...
 		# Removed chart type and axis selectors. Automatically show all custom visualizations for the selected table below.
-				elif selected_table == "products":
-					st.subheader("Product Assortment Overview")
-					# 1. Product Count by Category (Bar)
-					if "category" in df_clean.columns:
-						cat_counts = df_clean["category"].value_counts()
-						fig, ax = plt.subplots()
-						cat_counts.plot(kind="bar", ax=ax, color="skyblue")
-						ax.set_xlabel("Category")
-						ax.set_ylabel("Product Count")
-						ax.set_title("Product Count by Category")
-						plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
-						st.pyplot(fig)
 
-					# 2. Product Count by Department (Men vs Women) (Bar and Donut)
-					if "department" in df_clean.columns:
-						dept_counts = df_clean["department"].value_counts()
-						fig2, ax2 = plt.subplots()
-						dept_counts.plot(kind="bar", ax=ax2, color="lightgreen")
+		if selected_table == "products":
+			st.subheader("Product Assortment Overview")
+			# 1. Product Count by Category (Bar)
+			if "category" in df_clean.columns:
+				cat_counts = df_clean["category"].value_counts()
+				fig, ax = plt.subplots()
+				cat_counts.plot(kind="bar", ax=ax, color="skyblue")
+				ax.set_xlabel("Category")
+				ax.set_ylabel("Product Count")
+				ax.set_title("Product Count by Category")
+				plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+				st.pyplot(fig)
+
+			# 2. Product Count by Department (Men vs Women) (Bar and Donut)
+			if "department" in df_clean.columns:
+				dept_counts = df_clean["department"].value_counts()
+				fig2, ax2 = plt.subplots()
+				dept_counts.plot(kind="bar", ax=ax2, color="lightgreen")
 						ax2.set_xlabel("Department")
 						ax2.set_ylabel("Product Count")
 						ax2.set_title("Product Count by Department (Bar)")
