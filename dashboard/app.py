@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Streamlit Cloud: Write service account key from secrets to file and set env var
 import streamlit as st
 import json
+import pandas as pd
 from data_ingestion.fetch_bigquery_data import fetch_orders
 if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
 	key_path = "/tmp/service_account.json"
