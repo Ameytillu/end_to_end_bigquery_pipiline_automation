@@ -14,50 +14,7 @@ if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
 	with open(key_path, "w") as f:
 		f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
 	os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
-
-import streamlit as st
-import pandas as pd
-from datetime import date, timedelta
-from data_ingestion.fetch_bigquery_data import fetch_orders, get_bigquery_client
-from transformations.clean_transform import clean_orders
-from analytics.kpi_calculations import calculate_daily_kpis
-from visualization.generate_charts import plot_revenue, plot_orders, plot_avg_order_value
-import matplotlib.pyplot as plt
-
-
 st.set_page_config(page_title="E2E BigQuery Analytics", layout="wide")
-st.title("End-to-End BigQuery Analytics Dashboard")
-
-# Show dataset and metadata info
-st.markdown("""
-**Dataset:** `bigquery-public-data.thelook_ecommerce.orders`  
-This dashboard uses the [BigQuery public dataset: thelook_ecommerce.orders](https://console.cloud.google.com/bigquery?p=bigquery-public-data&d=thelook_ecommerce&page=dataset) which contains simulated e-commerce order data for analytics and demo purposes.
-
-**Table columns:**
-- `order_id`, `user_id`, `status`, `gender`, `created_at`, `returned_at`, `shipped_at`, `delivered_at`, `num_of_item`, `sale_price` (via join with order_items)
-
-**Source:** [Google Cloud Public Datasets](https://cloud.google.com/bigquery/public-data)
-""")
-
-
-# Diagnostic: Show min/max created_at date in the dataset
-with st.spinner("Checking available data range in BigQuery..."):
-	client = get_bigquery_client()
-	diag_query = """
-		SELECT MIN(created_at) as min_date, MAX(created_at) as max_date
-		FROM `bigquery-public-data.thelook_ecommerce.orders`
-	"""
-	diag_result = client.query(diag_query).to_dataframe()
-	min_date = diag_result['min_date'][0].date() if not diag_result.empty else None
-	max_date = diag_result['max_date'][0].date() if not diag_result.empty else None
-	if min_date and max_date:
-		st.info(f"Available data range: **{min_date}** to **{max_date}**")
-	else:
-		st.warning("Could not determine available data range.")
-
-st.sidebar.header("Query Parameters")
-
-
 # Table selector and row limit
 table_options = [
 	"products",
@@ -69,39 +26,54 @@ table_options = [
 selected_table = st.sidebar.selectbox("Select table", table_options)
 limit = st.sidebar.number_input("Row limit", min_value=100, max_value=100000, value=1000, step=100)
 
-st.write(f"DEBUG: selected_table={selected_table}, limit={limit}")
+# --- Use session_state to persist data and query state ---
+if 'df_clean' not in st.session_state:
+	st.session_state.df_clean = None
+	st.session_state.kpis = None
+	st.session_state.selected_table = None
+	st.session_state.limit = None
 
-if st.sidebar.button("Run Query"):
-	with st.spinner("Fetching data from BigQuery..."):
-		st.write(f"DEBUG: Querying table={selected_table} with limit={limit}")
-		df = fetch_orders(table_name=selected_table, limit=limit)
-		# Optionally, apply cleaning/analytics only for orders/products
-		if selected_table == "orders":
-			df_clean = clean_orders(df)
-			kpis = calculate_daily_kpis(df_clean)
-		else:
-			df_clean = df
-			kpis = pd.DataFrame()  # No KPIs for non-orders
+run_query = st.sidebar.button("Run Query")
 
-	if not df_clean.empty:
+if run_query or (
+	st.session_state.df_clean is not None and
+	st.session_state.selected_table == selected_table and
+	st.session_state.limit == limit
+):
+	if run_query:
+		with st.spinner("Fetching data from BigQuery..."):
+			st.write(f"DEBUG: Querying table={selected_table} with limit={limit}")
+			df = fetch_orders(table_name=selected_table, limit=limit)
+			# Optionally, apply cleaning/analytics only for orders/products
+			if selected_table == "orders":
+				df_clean = clean_orders(df)
+				kpis = calculate_daily_kpis(df_clean)
+			else:
+				df_clean = df
+				kpis = pd.DataFrame()  # No KPIs for non-orders
+			st.session_state.df_clean = df_clean
+			st.session_state.kpis = kpis
+			st.session_state.selected_table = selected_table
+			st.session_state.limit = limit
+	else:
+		df_clean = st.session_state.df_clean
+		kpis = st.session_state.kpis
+
+	if df_clean is not None and not df_clean.empty:
 		st.subheader("Raw Data Preview")
 		st.dataframe(df_clean.head(50))
-
 		# --- Interactive Charting Section ---
 		st.subheader("Explore Data Visually")
 		chart_types = ["Bar", "Line", "Scatter", "Histogram", "Box"]
 		chart_type = st.selectbox("Chart type", chart_types, index=0)
 
-		# Identify column types
 		numeric_cols = df_clean.select_dtypes(include=['number']).columns.tolist()
 		categorical_cols = df_clean.select_dtypes(include=['object', 'category']).columns.tolist()
 		all_cols = df_clean.columns.tolist()
 
-		# Sensible defaults
 		default_x = numeric_cols[0] if numeric_cols else (categorical_cols[0] if categorical_cols else all_cols[0])
 		default_y = numeric_cols[1] if len(numeric_cols) > 1 else (numeric_cols[0] if numeric_cols else None)
 
-		# Guardrails and selectors
 		if chart_type in ["Bar", "Line", "Scatter"]:
 			x_axis = st.selectbox("X axis", all_cols, index=all_cols.index(default_x) if default_x in all_cols else 0)
 			y_axis = st.selectbox("Y axis", numeric_cols, index=numeric_cols.index(default_y) if default_y in numeric_cols else 0) if numeric_cols else None
@@ -114,7 +86,6 @@ if st.sidebar.button("Run Query"):
 		else:
 			x_axis, y_axis = None, None
 
-		# Only show chart if valid columns are selected
 		if (
 			(chart_type in ["Bar", "Line", "Scatter"] and x_axis and y_axis) or
 			(chart_type == "Histogram" and x_axis) or
@@ -122,7 +93,6 @@ if st.sidebar.button("Run Query"):
 		):
 			fig, ax = plt.subplots()
 			if chart_type == "Bar":
-				# Bar: group by x, aggregate y (mean/count)
 				if pd.api.types.is_numeric_dtype(df_clean[x_axis]):
 					df_plot = df_clean[x_axis].value_counts().sort_index()
 					df_plot.plot(kind="bar", ax=ax)
@@ -159,6 +129,51 @@ if st.sidebar.button("Run Query"):
 			st.info("Select valid columns for the chosen chart type.")
 
 		# --- End Interactive Charting Section ---
+
+		# Optionally show KPIs/charts only for orders
+		if selected_table == "orders" and kpis is not None and not kpis.empty:
+			st.subheader("Key Performance Indicators (KPIs)")
+			kpi1, kpi2, kpi3 = st.columns(3)
+			total_revenue = kpis['revenue'].sum()
+			total_orders = kpis['orders'].sum()
+			avg_order_value = kpis['avg_order_value'].mean()
+			kpi1.metric("Total Revenue", f"${total_revenue:,.2f}")
+			kpi2.metric("Total Orders", f"{total_orders}")
+			kpi3.metric("Avg Order Value", f"${avg_order_value:,.2f}")
+
+			st.subheader("Revenue Trend")
+			fig1 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['revenue'], label='Revenue')
+			plt.xlabel('Date')
+			plt.ylabel('Revenue')
+			plt.title('Daily Revenue')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig1)
+
+			st.subheader("Orders Trend")
+			fig2 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['orders'], label='Orders', color='orange')
+			plt.xlabel('Date')
+			plt.ylabel('Orders')
+			plt.title('Daily Orders')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig2)
+
+			st.subheader("Average Order Value Trend")
+			fig3 = plt.figure()
+			plt.plot(kpis['order_date'], kpis['avg_order_value'], label='Avg Order Value', color='green')
+			plt.xlabel('Date')
+			plt.ylabel('Avg Order Value')
+			plt.title('Average Order Value by Day')
+			plt.xticks(rotation=45)
+			plt.tight_layout()
+			st.pyplot(fig3)
+	else:
+		st.warning("No data found for the selected parameters.")
+else:
+	st.info("Select table and row limit, then click 'Run Query' to view data.")
 
 		# Optionally show KPIs/charts only for orders
 		if selected_table == "orders" and not kpis.empty:
