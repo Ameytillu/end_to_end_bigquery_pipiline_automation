@@ -84,40 +84,39 @@ if run_query or (
 		df_clean = st.session_state.df_clean
 		kpis = st.session_state.kpis
 
+	# Always show preview and visualizations if data is present
+	if df_clean is not None and not df_clean.empty:
+		st.subheader("Raw Data Preview")
+		st.dataframe(df_clean.head(50))
 
+		if selected_table == "order_items":
+			st.subheader("Order & Status Analysis")
+			# 1. Order Status Distribution (Bar)
+			if "status" in df_clean.columns:
+				status_counts = df_clean["status"].value_counts()
+				fig, ax = plt.subplots()
+				status_counts.plot(kind="bar", ax=ax, color="skyblue")
+				ax.set_xlabel("Order Status")
+				ax.set_ylabel("Count")
+				ax.set_title("Order Status Distribution (Bar)")
+				plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+				st.pyplot(fig)
+				# Donut/Pie chart
+				fig2, ax2 = plt.subplots()
+				status_counts.plot(kind="pie", ax=ax2, autopct='%1.1f%%', startangle=90)
+				ax2.set_ylabel("")
+				ax2.set_title("Order Status Distribution (Donut)")
+				centre_circle = plt.Circle((0,0),0.70,fc='white')
+				fig2.gca().add_artist(centre_circle)
+				st.pyplot(fig2)
 
-		if df_clean is not None and not df_clean.empty:
-			st.subheader("Raw Data Preview")
-			st.dataframe(df_clean.head(50))
-
-			if selected_table == "order_items":
-				st.subheader("Order & Status Analysis")
-				# 1. Order Status Distribution (Bar)
-				if "status" in df_clean.columns:
-					status_counts = df_clean["status"].value_counts()
-					fig, ax = plt.subplots()
-					status_counts.plot(kind="bar", ax=ax, color="skyblue")
-					ax.set_xlabel("Order Status")
-					ax.set_ylabel("Count")
-					ax.set_title("Order Status Distribution (Bar)")
-					plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
-					st.pyplot(fig)
-					# Donut/Pie chart
-					fig2, ax2 = plt.subplots()
-					status_counts.plot(kind="pie", ax=ax2, autopct='%1.1f%%', startangle=90)
-					ax2.set_ylabel("")
-					ax2.set_title("Order Status Distribution (Donut)")
-					centre_circle = plt.Circle((0,0),0.70,fc='white')
-					fig2.gca().add_artist(centre_circle)
-					st.pyplot(fig2)
-
-				# 2. Order Funnel (Created → Delivered → Returned)
-				st.subheader("Order Funnel (Created → Delivered → Returned)")
-				funnel_stages = [
-					("Created", df_clean["created_at"].notnull().sum() if "created_at" in df_clean.columns else 0),
-					("Delivered", df_clean["delivered_at"].notnull().sum() if "delivered_at" in df_clean.columns else 0),
-					("Returned", df_clean["returned_at"].notnull().sum() if "returned_at" in df_clean.columns else 0)
-				]
+			# 2. Order Funnel (Created → Delivered → Returned)
+			st.subheader("Order Funnel (Created → Delivered → Returned)")
+			funnel_stages = [
+				("Created", df_clean["created_at"].notnull().sum() if "created_at" in df_clean.columns else 0),
+				("Delivered", df_clean["delivered_at"].notnull().sum() if "delivered_at" in df_clean.columns else 0),
+				("Returned", df_clean["returned_at"].notnull().sum() if "returned_at" in df_clean.columns else 0)
+			]
 				funnel_labels, funnel_values = zip(*funnel_stages)
 				fig3, ax3 = plt.subplots()
 				ax3.barh(funnel_labels, funnel_values, color="lightgreen")
