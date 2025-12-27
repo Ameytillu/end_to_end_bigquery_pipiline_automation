@@ -57,7 +57,6 @@ with st.spinner("Checking available data range in BigQuery..."):
 
 st.sidebar.header("Query Parameters")
 
-st.write(f"DEBUG: start_date={start_date}, end_date={end_date}, limit={limit}")
 
 # Table selector and row limit
 table_options = [
