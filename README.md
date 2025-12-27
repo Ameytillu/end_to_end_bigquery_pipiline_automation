@@ -1,5 +1,8 @@
 # End-to-End BigQuery Pipeline Automation
 
+## Live Streamlit Demo
+Try the interactive dashboard here: [Streamlit Trial Deployment](https://endtoendbigquerypipilineautomation-2evxpmwjtwx8ezzfmpxxr6.streamlit.app/)
+
 ## Overview
 This project demonstrates a production-style, end-to-end data pipeline built using BigQuery public datasets and Python.  
 The pipeline automates data ingestion, transformation, analytics, and visualization, and is orchestrated using Prefect.
