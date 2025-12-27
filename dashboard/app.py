@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import streamlit as st
 import json
 import pandas as pd
-from data_ingestion.fetch_bigquery_data import fetch_orders
+from data_ingestion.fetch_bigquery_data import fetch_table_data
 if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
 	key_path = "/tmp/service_account.json"
 	with open(key_path, "w") as f:
@@ -66,7 +66,9 @@ if run_query or (
 	if run_query:
 		with st.spinner("Fetching data from BigQuery..."):
 			st.write(f"DEBUG: Querying table={selected_table} with limit={limit}")
-			df = fetch_orders(table_name=selected_table, limit=limit)
+			df = fetch_table_data(table_name=selected_table, limit=limit)
+			st.write(f"DEBUG: DataFrame shape after fetch: {df.shape}")
+			st.write(f"DEBUG: DataFrame columns after fetch: {df.columns.tolist()}")
 			# Optionally, apply cleaning/analytics only for orders/products
 			if selected_table == "orders":
 				df_clean = clean_orders(df)

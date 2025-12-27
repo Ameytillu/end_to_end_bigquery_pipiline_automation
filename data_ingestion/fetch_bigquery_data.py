@@ -35,7 +35,7 @@ def get_bigquery_client():
     return client
 
 
-def fetch_orders(table_name, limit):
+def fetch_table_data(table_name, limit):
     client = get_bigquery_client()
     query = f"""
         SELECT *
@@ -45,4 +45,7 @@ def fetch_orders(table_name, limit):
     print(f"DEBUG: BigQuery query: {query}")
     df = client.query(query).to_dataframe()
     print(f"DEBUG: Number of records fetched: {len(df)}")
+    print(f"DEBUG: DataFrame columns: {df.columns.tolist()}")
+    print(f"DEBUG: DataFrame shape: {df.shape}")
+    print(f"DEBUG: First 5 rows:\n{df.head()}")
     return df
