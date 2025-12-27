@@ -86,6 +86,33 @@ if st.sidebar.button("Run Query"):
 	if not df_clean.empty:
 		st.subheader("Raw Data Preview")
 		st.dataframe(df_clean.head(50))
+
+		# Visualizations for each table
+		if selected_table == "products":
+			st.subheader("Product Category Distribution")
+			if "category" in df_clean.columns:
+				cat_counts = df_clean["category"].value_counts()
+				st.bar_chart(cat_counts)
+		elif selected_table == "distribution_centers":
+			st.subheader("Distribution Centers Locations")
+			if "latitude" in df_clean.columns and "longitude" in df_clean.columns:
+				st.map(df_clean[["latitude", "longitude"]].rename(columns={"latitude": "lat", "longitude": "lon"}))
+		elif selected_table == "events":
+			st.subheader("Event Type Counts")
+			if "event_type" in df_clean.columns:
+				event_counts = df_clean["event_type"].value_counts()
+				st.bar_chart(event_counts)
+		elif selected_table == "inventory_items":
+			st.subheader("Product Category in Inventory Items")
+			if "product_category" in df_clean.columns:
+				inv_cat_counts = df_clean["product_category"].value_counts()
+				st.bar_chart(inv_cat_counts)
+		elif selected_table == "order_items":
+			st.subheader("Order Status Distribution")
+			if "status" in df_clean.columns:
+				status_counts = df_clean["status"].value_counts()
+				st.bar_chart(status_counts)
+
 		# Optionally show KPIs/charts only for orders
 		if selected_table == "orders" and not kpis.empty:
 			st.subheader("Key Performance Indicators (KPIs)")
