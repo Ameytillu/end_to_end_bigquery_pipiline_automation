@@ -1,7 +1,14 @@
 def fetch_data_from_bigquery():
     # ...existing code...
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-    query = "SELECT * FROM `bigquery-public-data.thelook_ecommerce.orders` LIMIT 1000"  # Public BigQuery table
+    base_query = "SELECT * FROM `bigquery-public-data.thelook_ecommerce.orders`"
+    where_clauses = []
+    if start_date:
+        where_clauses.append(f"DATE(created_at) >= '{start_date}'")
+    if end_date:
+        where_clauses.append(f"DATE(created_at) <= '{end_date}'")
+    where_sql = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+    query = f"{base_query}{where_sql} LIMIT {row_limit}"
     print(f"DEBUG: Running BigQuery query: {query}")
     df = client.query(query).to_dataframe()
     print(f"DEBUG: Number of records fetched: {len(df)}")
