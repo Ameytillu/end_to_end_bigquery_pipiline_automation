@@ -438,49 +438,8 @@ if run_query or (
 				ax5.set_title("Returned Orders")
 				st.pyplot(fig5)
 
-		elif selected_table != "order_items":
-			# --- Interactive Charting Section ---
-			st.subheader("Explore Data Visually")
-			chart_types = ["Bar", "Line", "Scatter", "Histogram", "Box"]
-			chart_type = st.selectbox("Chart type", chart_types, index=0)
-			numeric_cols = df_clean.select_dtypes(include=['number']).columns.tolist()
-			categorical_cols = df_clean.select_dtypes(include=['object', 'category']).columns.tolist()
-			all_cols = df_clean.columns.tolist()
-			default_x = numeric_cols[0] if numeric_cols else (categorical_cols[0] if categorical_cols else all_cols[0])
-			default_y = numeric_cols[1] if len(numeric_cols) > 1 else (numeric_cols[0] if numeric_cols else None)
-			if chart_type in ["Bar", "Line", "Scatter"]:
-				x_axis = st.selectbox("X axis", all_cols, index=all_cols.index(default_x) if default_x in all_cols else 0)
-				y_axis = st.selectbox("Y axis", numeric_cols, index=numeric_cols.index(default_y) if default_y in numeric_cols else 0) if numeric_cols else None
-			elif chart_type == "Histogram":
-				x_axis = st.selectbox("Column", numeric_cols, index=0) if numeric_cols else None
-				y_axis = None
-			elif chart_type == "Box":
-				x_axis = st.selectbox("X (category)", categorical_cols, index=0) if categorical_cols else None
-				y_axis = st.selectbox("Y (numeric)", numeric_cols, index=0) if numeric_cols else None
-			else:
-				x_axis, y_axis = None, None
-			if (
-				(chart_type in ["Bar", "Line", "Scatter"] and x_axis and y_axis) or
-				(chart_type == "Histogram" and x_axis) or
-				(chart_type == "Box" and x_axis and y_axis)
-			):
-				fig, ax = plt.subplots()
-				max_xticks = 20
-				if chart_type == "Bar":
-					if pd.api.types.is_numeric_dtype(df_clean[x_axis]):
-						df_plot = df_clean[x_axis].value_counts().sort_index()
-						df_plot.plot(kind="bar", ax=ax)
-						ax.set_ylabel("Count")
-					else:
-						df_plot = df_clean.groupby(x_axis)[y_axis].mean().sort_values()
-						if len(df_plot) > max_xticks:
-							st.warning(f"Too many unique values in '{x_axis}' to display clearly. Showing top {max_xticks}.")
-							df_plot = df_plot.head(max_xticks)
-						df_plot.plot(kind="bar", ax=ax)
-						ax.set_ylabel(f"Mean {y_axis}")
-					ax.set_xlabel(x_axis)
-					ax.set_title(f"Bar Chart: {x_axis} vs {y_axis if y_axis else 'Count'}")
-					plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+		# ...existing code...
+		# Removed chart type and axis selectors. Automatically show all custom visualizations for the selected table below.
 				elif selected_table == "products":
 					st.subheader("Product Assortment Overview")
 					# 1. Product Count by Category (Bar)
