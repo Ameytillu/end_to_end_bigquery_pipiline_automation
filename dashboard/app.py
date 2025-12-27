@@ -56,15 +56,22 @@ with st.spinner("Checking available data range in BigQuery..."):
 		st.warning("Could not determine available data range.")
 
 st.sidebar.header("Query Parameters")
+
 today = date.today()
 default_start = today - timedelta(days=30)
 start_date = st.sidebar.date_input("Start date", default_start)
 end_date = st.sidebar.date_input("End date", today)
 limit = st.sidebar.number_input("Row limit", min_value=100, max_value=100000, value=1000, step=100)
 
+st.write(f"DEBUG: start_date={start_date}, end_date={end_date}, limit={limit}")
+
 if st.sidebar.button("Run Query"):
 	with st.spinner("Fetching data from BigQuery..."):
-		df = fetch_orders(start_date=start_date, end_date=end_date, limit=limit)
+		# Convert dates to string format YYYY-MM-DD for query
+		start_date_str = start_date.strftime("%Y-%m-%d") if hasattr(start_date, 'strftime') else str(start_date)
+		end_date_str = end_date.strftime("%Y-%m-%d") if hasattr(end_date, 'strftime') else str(end_date)
+		st.write(f"DEBUG: Querying with start_date={start_date_str}, end_date={end_date_str}, limit={limit}")
+		df = fetch_orders(start_date=start_date_str, end_date=end_date_str, limit=limit)
 		df_clean = clean_orders(df)
 		kpis = calculate_daily_kpis(df_clean)
 
