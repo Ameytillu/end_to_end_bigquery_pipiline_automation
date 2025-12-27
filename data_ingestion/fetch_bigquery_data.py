@@ -39,8 +39,10 @@ def fetch_orders(start_date, end_date, limit):
     query = f"""
         SELECT *
         FROM `bigquery-public-data.thelook_ecommerce.orders`
-        WHERE created_at BETWEEN '{start_date}' AND '{end_date}'
+        WHERE DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'
         LIMIT {limit}
     """
+    print(f"DEBUG: BigQuery query: {query}")
     df = client.query(query).to_dataframe()
+    print(f"DEBUG: Number of records fetched: {len(df)}")
     return df
