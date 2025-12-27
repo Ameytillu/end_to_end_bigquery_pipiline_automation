@@ -1,9 +1,19 @@
 
 
+
 # Ensure project root is in sys.path for imports
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Streamlit Cloud: Write service account key from secrets to file and set env var
+import streamlit as st
+import json
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
+	key_path = "/tmp/service_account.json"
+	with open(key_path, "w") as f:
+		f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+	os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
 import streamlit as st
 import pandas as pd
