@@ -385,9 +385,4 @@ if run_query or (
 			st.warning("Required columns 'order_date' and/or 'avg_order_value' not found in KPIs data. Unable to plot Average Order Value Trend.")
 	else:
 		st.warning("No data found for the selected parameters.")
-			plt.tight_layout()
-			st.pyplot(fig3)
-
-else:
-	st.warning("No data found for the selected parameters.")
 
