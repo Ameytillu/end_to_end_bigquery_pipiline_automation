@@ -88,17 +88,25 @@ if run_query or (
 		st.dataframe(df_clean.head(50))
 
 		if selected_table == "order_items":
-					elif selected_table == "products":
-								elif selected_table == "distribution_centers":
-											elif selected_table == "events":
-														elif selected_table == "inventory_items":
-															st.subheader("Inventory Overview")
-															# 1. Total Inventory Items (KPI)
-															total_items = len(df_clean)
-															st.metric(label="Total Inventory Items", value=total_items)
+			# ...existing code for order_items...
+			pass
+		elif selected_table == "products":
+			# ...existing code for products...
+			pass
+		elif selected_table == "distribution_centers":
+			# ...existing code for distribution_centers...
+			pass
+		elif selected_table == "events":
+			# ...existing code for events...
+			pass
+		elif selected_table == "inventory_items":
+			st.subheader("Inventory Overview")
+			# 1. Total Inventory Items (KPI)
+			total_items = len(df_clean)
+			st.metric(label="Total Inventory Items", value=total_items)
 
-															# 2. Inventory Items by Product Category (Bar)
-															if "category" in df_clean.columns:
+			# 2. Inventory Items by Product Category (Bar)
+			if "category" in df_clean.columns:
 																cat_counts = df_clean["category"].value_counts()
 																fig, ax = plt.subplots()
 																cat_counts.plot(kind="bar", ax=ax, color="skyblue")
