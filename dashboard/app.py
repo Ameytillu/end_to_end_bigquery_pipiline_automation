@@ -550,6 +550,7 @@ if run_query or (
 			plt.xticks(rotation=45)
 			plt.tight_layout()
 			st.pyplot(fig3)
-	else:
-		st.warning("No data found for the selected parameters.")
+
+else:
+	st.warning("No data found for the selected parameters.")
 
